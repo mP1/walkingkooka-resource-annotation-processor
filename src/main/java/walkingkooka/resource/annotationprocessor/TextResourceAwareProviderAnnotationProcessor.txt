@@ -1,0 +1,9 @@
+package $PACKAGE;
+
+public final class $NAME implements walkingkooka.resource.TextResource {
+
+    @Override
+    public String text() {
+        return $TEXT;
+    }
+}
