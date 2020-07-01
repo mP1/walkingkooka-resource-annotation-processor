@@ -30,6 +30,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
@@ -115,6 +116,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                 }
 
                 writer.write(providerTemplate.replace("$PACKAGE", packageName)
+                        .replace("$VISIBILITY", visibility(root))
                         .replace("$NAME", providerTypeSimpleName)
                         .replace("$TEXT", CharSequences.quoteAndEscape(text)));
                 writer.flush();
@@ -143,6 +145,33 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             resource = filer.getResource(StandardLocation.CLASS_PATH, packageName, typeName + ".txt");
         }
         return resource;
+    }
+
+    /**
+     * Identifies the visibility of the host class and returns the replacement keyword.
+     */
+    private static String visibility(final TypeElement type) {
+        final String visibility;
+
+        for (; ; ) {
+            final Set<Modifier> modifier = type.getModifiers();
+            if (modifier.contains(Modifier.PUBLIC)) {
+                visibility = "public";
+                break;
+            }
+            if (modifier.contains(Modifier.PROTECTED)) {
+                visibility = "protected";
+                break;
+            }
+            if (modifier.contains(Modifier.PRIVATE)) {
+                visibility = "private";
+                break;
+            }
+            visibility = "";
+            break;
+        }
+
+        return visibility;
     }
 
     private Elements elements;
