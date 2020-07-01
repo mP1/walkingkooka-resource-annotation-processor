@@ -15,21 +15,7 @@
  */
 package test;
 
+@walkingkooka.resource.TextResourceAware(normalizeSpace=true)
+public class GeneratedNormalizeSpaceTrue {
 
-import com.google.j2cl.junit.apt.J2clTestInput;
-import org.junit.Assert;
-import org.junit.Test;
-
-@J2clTestInput(JunitTest.class)
-public class JunitTest {
-
-    @Test
-    public void testTextResourceAwareNormalizeSpaceFalse() {
-        Assert.assertEquals("ABC   1234", new GeneratedProvider().text());
-    }
-
-    @Test
-    public void testTextResourceAwareNormalizeSpaceTrue() {
-        Assert.assertEquals("ABC 1234 567", new GeneratedNormalizeSpaceTrueProvider().text());
-    }
 }
