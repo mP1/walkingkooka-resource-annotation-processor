@@ -17,18 +17,28 @@
 
 package walkingkooka.resource.annotationprocessor;
 
-import walkingkooka.collect.set.*;
-import walkingkooka.resource.*;
-import walkingkooka.text.*;
+import walkingkooka.collect.set.Sets;
+import walkingkooka.resource.TextResourceAware;
+import walkingkooka.resource.TextResourceException;
+import walkingkooka.resource.TextResources;
+import walkingkooka.text.CharSequences;
 
-import javax.annotation.processing.*;
-import javax.lang.model.*;
-import javax.lang.model.element.*;
-import javax.lang.model.util.*;
-import javax.tools.Diagnostic.*;
-import javax.tools.*;
-import java.io.*;
-import java.util.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic.Kind;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Set;
 
 /**
  * An {@link AbstractProcessor} that creates a class that creates a class for the class including the annotation
@@ -95,9 +105,14 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             try (final Writer writer = filer.createSourceFile(provider).openWriter()) {
                 final String providerTemplate = this.providerTemplate();
 
-                final String text = this.readResource(packageName, typeName)
+                String text = this.readResource(packageName, typeName)
                         .getCharContent(false)
                         .toString();
+
+                final TextResourceAware annotation = root.getAnnotation(TextResourceAware.class);
+                if(annotation.normalizeSpace()) {
+                    text = text.replaceAll("\\s+", " ");
+                }
 
                 writer.write(providerTemplate.replace("$PACKAGE", packageName)
                         .replace("$NAME", providerTypeSimpleName)
