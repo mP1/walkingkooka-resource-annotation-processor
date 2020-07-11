@@ -32,4 +32,9 @@ public class JunitTest {
     public void testTextResourceAwareNormalizeSpaceTrue() {
         Assert.assertEquals("ABC 1234 567", new GeneratedNormalizeSpaceTrueProvider().text());
     }
+
+    @Test
+    public void testTextResourceAwareFileExtension() {
+        Assert.assertEquals("XYZ987", new GeneratedFileExtensionTxt2Provider().text());
+    }
 }
