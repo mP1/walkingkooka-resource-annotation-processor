@@ -35,6 +35,12 @@ public final class TextFileProvider implements walkingkooka.resource.TextResourc
 }
 ```
 
+usage
+
+```java
+new TextFileProvider().text(); // returns "content   of   sample/TextFile.txt2"
+```
+
 
 ## Getting the source
 
