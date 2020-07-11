@@ -15,7 +15,7 @@ J2CL where `java.lang.Class#getResourceAsStream` is not supported but using file
 ```java
 package sample;
 
-@walkingkooka.resource.TextResourceAware(normalizeSpace = true)
+@walkingkooka.resource.TextResourceAware(normalizeSpace = true, fileExtension = ".txt2")
 public class TextFile {
   // members not copied to generated class
 }
@@ -30,7 +30,7 @@ public final class TextFileProvider implements walkingkooka.resource.TextResourc
     
     @Override
     public String text() {
-       return "content   of   sample/TextFile.txt";
+       return "content   of   sample/TextFile.txt2";
     }
 }
 ```
