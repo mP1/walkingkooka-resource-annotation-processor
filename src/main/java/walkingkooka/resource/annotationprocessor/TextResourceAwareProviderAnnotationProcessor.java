@@ -106,12 +106,17 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             try (final Writer writer = filer.createSourceFile(provider).openWriter()) {
                 final String providerTemplate = this.providerTemplate();
 
-                String text = this.readResource(packageName, typeName)
+                final TextResourceAware textResourceAware = root.getAnnotation(TextResourceAware.class);
+                final String fileExtension = textResourceAware.fileExtension();
+                if (CharSequences.isNullOrEmpty(fileExtension)) {
+                    throw new IllegalArgumentException("File extension must not be null or empty");
+                }
+
+                String text = this.readResource(packageName, typeName, '.' + fileExtension)
                         .getCharContent(false)
                         .toString();
 
-                final TextResourceAware annotation = root.getAnnotation(TextResourceAware.class);
-                if(annotation.normalizeSpace()) {
+                if(textResourceAware.normalizeSpace()) {
                     text = text.replaceAll("\\s+", " ");
                 }
 
@@ -137,12 +142,14 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     /**
      * Try twice so the resource can be found, mostly a hack to enable j2cl-maven-plugin to work as intended.
      */
-    private FileObject readResource(final String packageName, final String typeName) throws IOException {
+    private FileObject readResource(final String packageName,
+                                    final String typeName,
+                                    final String fileExtension) throws IOException {
         FileObject resource;
         try {
-            resource = filer.getResource(StandardLocation.SOURCE_PATH, packageName, typeName + ".txt");
+            resource = filer.getResource(StandardLocation.SOURCE_PATH, packageName, typeName + fileExtension);
         } catch (final FileNotFoundException retry) {
-            resource = filer.getResource(StandardLocation.CLASS_PATH, packageName, typeName + ".txt");
+            resource = filer.getResource(StandardLocation.CLASS_PATH, packageName, typeName + fileExtension);
         }
         return resource;
     }
