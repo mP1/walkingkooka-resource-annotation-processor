@@ -9,8 +9,15 @@
 
 # walkingkooka-resource-annotation-processor
 
-An annotation processor that generates a provider for any class marked with `walkingkooka.resource.TextResourceAware`. This is particularly useful for any runtime environment such as
-J2CL where `java.lang.Class#getResourceAsStream` is not supported but using files as text is still required.
+An annotation processor that generates a provider for any class marked with `walkingkooka.resource.TextResourceAware`. 
+This is particularly useful for any runtime environment such as J2CL where `java.lang.Class#getResourceAsStream` is not 
+supported but using files as text is still required.
+
+Note it is not currently possible to specify the charset encoding for any text file. Theres is a 
+[ticket](https://github.com/mP1/walkingkooka-resource-annotation-processor/issues/21) to add support to specify a Charset
+and this will require changing using `FileObject#openInputStream` rather than `FileObject#getCharContent`.
+
+
 
 ```java
 package sample;
