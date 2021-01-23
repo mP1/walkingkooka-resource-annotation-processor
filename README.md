@@ -49,13 +49,5 @@ new TextFileProvider().text(); // returns "content   of   sample/TextFile.txt2"
 ```
 
 
-## Getting the source
-
-You can either download the source using the "ZIP" button at the top
-of the github page, or you can make a clone using git:
-
-```
-git clone git://github.com/mP1/walkingkooka-resource-annotation-processor.git
-```
 
 
