@@ -52,17 +52,17 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     }
 
     @Override
-    public final SourceVersion getSupportedSourceVersion() {
+    public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
     }
 
     @Override
-    public final Set<String> getSupportedAnnotationTypes() {
+    public Set<String> getSupportedAnnotationTypes() {
         return Sets.of(TextResourceAware.class.getName());
     }
 
     @Override
-    public final synchronized void init(final ProcessingEnvironment environment) {
+    public synchronized void init(final ProcessingEnvironment environment) {
         super.init(environment);
 
         this.elements = environment.getElementUtils();
@@ -71,7 +71,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     }
 
     @Override
-    public final boolean process(final Set<? extends TypeElement> annotations,
+    public boolean process(final Set<? extends TypeElement> annotations,
                                  final RoundEnvironment environment) {
         try {
             for (TypeElement annotation : annotations) {
