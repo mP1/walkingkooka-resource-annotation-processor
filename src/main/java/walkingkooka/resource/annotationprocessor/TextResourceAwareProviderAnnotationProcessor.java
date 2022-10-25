@@ -77,7 +77,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             for (TypeElement annotation : annotations) {
                 for (final Element annotated : environment.getElementsAnnotatedWith(annotation)) {
                     if (annotated instanceof TypeElement) {
-                        this.process0((TypeElement) annotated, environment);
+                        this.process0((TypeElement) annotated);
                     }
                 }
             }
@@ -88,8 +88,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
         return false; // whether or not the set of annotation types are claimed by this processor
     }
 
-    private void process0(final TypeElement root,
-                          final RoundEnvironment environment) throws Exception {
+    private void process0(final TypeElement root) throws Exception {
         final String enclosing = root.getQualifiedName().toString();
         final String provider = enclosing + PROVIDER;
         final TypeElement exists = this.elements.getTypeElement(provider);
