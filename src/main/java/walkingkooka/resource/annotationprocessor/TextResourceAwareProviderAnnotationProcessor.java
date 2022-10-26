@@ -18,6 +18,9 @@
 package walkingkooka.resource.annotationprocessor;
 
 import walkingkooka.collect.set.Sets;
+import walkingkooka.reflect.ClassName;
+import walkingkooka.reflect.JavaVisibility;
+import walkingkooka.resource.TextResource;
 import walkingkooka.resource.TextResourceAware;
 import walkingkooka.resource.TextResourceException;
 import walkingkooka.resource.TextResources;
@@ -47,6 +50,8 @@ import java.util.Set;
  */
 public final class TextResourceAwareProviderAnnotationProcessor extends AbstractProcessor {
 
+    private final static String FILE_EXTENSION = ".txt";
+
     public TextResourceAwareProviderAnnotationProcessor() {
         super();
     }
@@ -72,12 +77,26 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
 
     @Override
     public boolean process(final Set<? extends TypeElement> annotations,
-                                 final RoundEnvironment environment) {
+                           final RoundEnvironment environment) {
         try {
             for (TypeElement annotation : annotations) {
                 for (final Element annotated : environment.getElementsAnnotatedWith(annotation)) {
                     if (annotated instanceof TypeElement) {
-                        this.process0((TypeElement) annotated);
+                        final TypeElement typeElement = (TypeElement) annotated;
+
+                        final ClassName enclosing = ClassName.with(
+                                typeElement.getQualifiedName()
+                                        .toString()
+                        );
+
+                        this.generateJreProvider(
+                                enclosing,
+                                visibility(typeElement)
+                        );
+                        this.generateJ2clProvider(
+                                enclosing,
+                                typeElement.getAnnotation(TextResourceAware.class)
+                        );
                     }
                 }
             }
@@ -88,41 +107,106 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
         return false; // whether or not the set of annotation types are claimed by this processor
     }
 
-    private void process0(final TypeElement root) throws Exception {
-        final String enclosing = root.getQualifiedName().toString();
-        final String provider = enclosing + PROVIDER;
-        final TypeElement exists = this.elements.getTypeElement(provider);
+    /**
+     * Identifies the {@link JavaVisibility} of the host class and returns the replacement keyword.
+     */
+    private static JavaVisibility visibility(final TypeElement type) {
+        final JavaVisibility visibility;
+
+        for (; ; ) {
+            final Set<Modifier> modifier = type.getModifiers();
+            if (modifier.contains(Modifier.PUBLIC)) {
+                visibility = JavaVisibility.PUBLIC;
+                break;
+            }
+            if (modifier.contains(Modifier.PROTECTED)) {
+                visibility = JavaVisibility.PROTECTED;
+                break;
+            }
+            if (modifier.contains(Modifier.PRIVATE)) {
+                visibility = JavaVisibility.PRIVATE;
+                break;
+            }
+            visibility = JavaVisibility.PACKAGE_PRIVATE;
+            break;
+        }
+
+        return visibility;
+    }
+
+    /**
+     * Generates a new class in the same package as the {@link TextResource} with "Provider" appended to the class name.
+     * This new class will load the text using {@link TextResources#classPath(String, Class)}. This allows the resource
+     * to be updated continuously and the new contents loaded, unlike the j2cl TextResource which has the resource text
+     * baked into the class source it generates.
+     */
+    private void generateJreProvider(final ClassName enclosing,
+                                     final JavaVisibility visibility) throws Exception {
+        final ClassName providerClassName = ClassName.with(enclosing + PROVIDER);
+        final String providerClassNameString = providerClassName.toString();
+        final TypeElement exists = this.elements.getTypeElement(providerClassNameString);
 
         // assume null means generated source does not exist...
         if (null == exists) {
             // without this check the generated class will be written multiple times resulting in an exception when attempting to create the file.
-            final String typeName = root.getSimpleName().toString();
-            final String packageName = CharSequences.subSequence(enclosing, 0, -typeName.length() - 1)
-                    .toString();
-            final String providerTypeSimpleName = typeName + PROVIDER;
+            final String providerTypeSimpleName = providerClassName.nameWithoutPackage();
             final Filer filer = this.filer;
 
-            try (final Writer writer = filer.createSourceFile(provider).openWriter()) {
-                final String providerTemplate = this.providerTemplate();
+            // write a class which will load the textResource using a ClassPathTextResource.
+            try (final Writer writer = filer.createSourceFile(providerClassNameString).openWriter()) {
+                final String providerTemplate = this.providerTemplate("jre");
 
-                final TextResourceAware textResourceAware = root.getAnnotation(TextResourceAware.class);
+                writer.write(
+                        providerTemplate.replace("$PACKAGE", providerClassName.parentPackage().value())
+                                .replace("$VISIBILITY", visibility.javaKeyword())
+                                .replace("$NAME", providerTypeSimpleName)
+                                .replace("$RESOURCE", enclosing.nameWithoutPackage() + FILE_EXTENSION)
+                );
+                writer.flush();
+            }
+        }
+    }
+
+    private void generateJ2clProvider(final ClassName enclosing,
+                                      final TextResourceAware textResourceAware) throws Exception {
+        final ClassName providerClassName = ClassName.with(enclosing + PROVIDER + "J2cl");
+        final String providerClassNameString = providerClassName.toString();
+        final TypeElement exists = this.elements.getTypeElement(providerClassNameString);
+
+        // assume null means generated source does not exist...
+        if (null == exists) {
+            final String enclosingSimpleName = enclosing.nameWithoutPackage();
+            // without this check the generated class will be written multiple times resulting in an exception when attempting to create the file.
+            final Filer filer = this.filer;
+
+            // write a class which will load the textResource as a String literal.
+            try (final Writer writer = filer.createSourceFile(providerClassNameString).openWriter()) {
+                final String providerTemplate = this.providerTemplate("j2cl");
+
                 final String fileExtension = textResourceAware.fileExtension();
                 if (CharSequences.isNullOrEmpty(fileExtension)) {
                     throw new IllegalArgumentException("File extension must not be null or empty");
                 }
 
-                String text = this.readResource(packageName, typeName, '.' + fileExtension)
-                        .getCharContent(false)
+                final String packageName = providerClassName.parentPackage()
+                        .value();
+
+                String text = this.readResource(
+                                packageName,
+                                enclosingSimpleName,
+                                '.' + fileExtension
+                        ).getCharContent(false)
                         .toString();
 
-                if(textResourceAware.normalizeSpace()) {
+                if (textResourceAware.normalizeSpace()) {
                     text = text.replaceAll("\\s+", " ");
                 }
 
-                writer.write(providerTemplate.replace("$PACKAGE", packageName)
-                        .replace("$VISIBILITY", visibility(root))
-                        .replace("$NAME", providerTypeSimpleName)
-                        .replace("$TEXT", CharSequences.quoteAndEscape(text)));
+                writer.write(
+                        providerTemplate.replace("$PACKAGE", packageName)
+                                .replace("$NAME", providerClassName.nameWithoutPackage())
+                                .replace("$TEXT", CharSequences.quoteAndEscape(text))
+                );
                 writer.flush();
             }
         }
@@ -131,11 +215,17 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     private final static String PROVIDER = "Provider";
 
     /**
-     * Loads the template which has a few placeholders for package, type name and the text being returned.
+     * Loads the template will be used to generate the java source for the class being generated.
      */
-    private String providerTemplate() throws TextResourceException {
-        return TextResources.classPath(this.getClass().getSimpleName() + ".txt", this.getClass())
-                .text();
+    private String providerTemplate(final String suffix) throws TextResourceException {
+        return TextResources.classPath(
+                this.getClass()
+                        .getSimpleName() +
+                        "-" +
+                        suffix +
+                        ".txt",
+                this.getClass()
+        ).text();
     }
 
     /**
@@ -151,33 +241,6 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             resource = filer.getResource(StandardLocation.CLASS_PATH, packageName, typeName + fileExtension);
         }
         return resource;
-    }
-
-    /**
-     * Identifies the visibility of the host class and returns the replacement keyword.
-     */
-    private static String visibility(final TypeElement type) {
-        final String visibility;
-
-        for (; ; ) {
-            final Set<Modifier> modifier = type.getModifiers();
-            if (modifier.contains(Modifier.PUBLIC)) {
-                visibility = "public";
-                break;
-            }
-            if (modifier.contains(Modifier.PROTECTED)) {
-                visibility = "protected";
-                break;
-            }
-            if (modifier.contains(Modifier.PRIVATE)) {
-                visibility = "private";
-                break;
-            }
-            visibility = "";
-            break;
-        }
-
-        return visibility;
     }
 
     private Elements elements;

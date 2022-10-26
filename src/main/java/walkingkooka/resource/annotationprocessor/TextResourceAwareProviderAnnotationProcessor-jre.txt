@@ -1,0 +1,15 @@
+package $PACKAGE;
+
+// This TextResource is only used in a JRE. The text() method will be removed and replaced by the parent class
+// so the GWTSTRIPPEDCOMPILE step continues without any references to TextResources.classPath.
+$VISIBILITY final class $NAME extends $NAMEJ2cl {
+
+    @Override
+    @javaemul.internal.annotations.GwtIncompatible
+    public String text() {
+        return walkingkooka.resource.TextResources.classPath(
+          "$RESOURCE",
+          $NAME.class
+        ).text();
+    }
+}
