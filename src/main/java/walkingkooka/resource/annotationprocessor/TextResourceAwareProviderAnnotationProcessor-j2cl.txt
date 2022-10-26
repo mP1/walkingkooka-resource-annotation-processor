@@ -1,6 +1,6 @@
 package $PACKAGE;
 
-$VISIBILITY final class $NAME implements walkingkooka.resource.TextResource {
+abstract class $NAME implements walkingkooka.resource.TextResource {
 
     @Override
     public String text() {
