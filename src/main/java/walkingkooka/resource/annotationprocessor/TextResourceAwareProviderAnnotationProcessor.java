@@ -89,13 +89,16 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                                         .toString()
                         );
 
+                        final TextResourceAware textResourceAware = typeElement.getAnnotation(TextResourceAware.class);
+
                         this.generateJreProvider(
                                 enclosing,
-                                visibility(typeElement)
+                                visibility(typeElement),
+                                textResourceAware
                         );
                         this.generateJ2clProvider(
                                 enclosing,
-                                typeElement.getAnnotation(TextResourceAware.class)
+                                textResourceAware
                         );
                     }
                 }
@@ -141,7 +144,8 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
      * baked into the class source it generates.
      */
     private void generateJreProvider(final ClassName enclosing,
-                                     final JavaVisibility visibility) throws Exception {
+                                     final JavaVisibility visibility,
+                                     final TextResourceAware textResourceAware) throws Exception {
         final ClassName providerClassName = ClassName.with(enclosing + PROVIDER);
         final String providerClassNameString = providerClassName.toString();
         final TypeElement exists = this.elements.getTypeElement(providerClassNameString);
@@ -160,7 +164,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                         providerTemplate.replace("$PACKAGE", providerClassName.parentPackage().value())
                                 .replace("$VISIBILITY", visibility.javaKeyword())
                                 .replace("$NAME", providerTypeSimpleName)
-                                .replace("$RESOURCE", enclosing.nameWithoutPackage() + FILE_EXTENSION)
+                                .replace("$RESOURCE", enclosing.nameWithoutPackage() + "." + fileExtension(textResourceAware))
                 );
                 writer.flush();
             }
@@ -183,18 +187,14 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
             try (final Writer writer = filer.createSourceFile(providerClassNameString).openWriter()) {
                 final String providerTemplate = this.providerTemplate("j2cl");
 
-                final String fileExtension = textResourceAware.fileExtension();
-                if (CharSequences.isNullOrEmpty(fileExtension)) {
-                    throw new IllegalArgumentException("File extension must not be null or empty");
-                }
-
                 final String packageName = providerClassName.parentPackage()
                         .value();
 
                 String text = this.readResource(
                                 packageName,
                                 enclosingSimpleName,
-                                '.' + fileExtension
+                                '.' +
+                                        fileExtension(textResourceAware)
                         ).getCharContent(false)
                         .toString();
 
@@ -213,6 +213,14 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     }
 
     private final static String PROVIDER = "Provider";
+
+    private static String fileExtension(final TextResourceAware textResourceAware) {
+        final String fileExtension = textResourceAware.fileExtension();
+        if (CharSequences.isNullOrEmpty(fileExtension)) {
+            throw new IllegalArgumentException("File extension must not be null or empty");
+        }
+        return fileExtension;
+    }
 
     /**
      * Loads the template will be used to generate the java source for the class being generated.

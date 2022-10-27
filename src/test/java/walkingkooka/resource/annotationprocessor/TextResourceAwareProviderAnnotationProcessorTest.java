@@ -17,7 +17,8 @@
 
 package walkingkooka.resource.annotationprocessor;
 
-import walkingkooka.reflect.*;
+import walkingkooka.reflect.ClassTesting;
+import walkingkooka.reflect.JavaVisibility;
 
 public final class TextResourceAwareProviderAnnotationProcessorTest implements ClassTesting<TextResourceAwareProviderAnnotationProcessor> {
 
