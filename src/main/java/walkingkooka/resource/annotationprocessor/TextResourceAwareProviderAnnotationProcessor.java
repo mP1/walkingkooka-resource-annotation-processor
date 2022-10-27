@@ -231,7 +231,7 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                         .getSimpleName() +
                         "-" +
                         suffix +
-                        ".txt",
+                        FILE_EXTENSION,
                 this.getClass()
         ).text();
     }
