@@ -15,7 +15,7 @@
  */
 package test;
 
-@walkingkooka.resource.TextResourceAware(fileExtension="txt2")
+@walkingkooka.resource.TextResourceAware(fileExtension = "txt2")
 public class GeneratedFileExtensionTxt2 {
 
 }

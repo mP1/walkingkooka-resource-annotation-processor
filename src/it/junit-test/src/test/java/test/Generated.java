@@ -15,7 +15,7 @@
  */
 package test;
 
-@walkingkooka.resource.TextResourceAware(normalizeSpace=false)
+@walkingkooka.resource.TextResourceAware(normalizeSpace = false)
 class Generated {
 
 }
