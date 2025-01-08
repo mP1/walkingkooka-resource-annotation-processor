@@ -15,7 +15,7 @@
  */
 package test;
 
-@walkingkooka.resource.TextResourceAware(normalizeSpace=true)
+@walkingkooka.resource.TextResourceAware(normalizeSpace = true)
 public class GeneratedNormalizeSpaceTrue {
 
 }
