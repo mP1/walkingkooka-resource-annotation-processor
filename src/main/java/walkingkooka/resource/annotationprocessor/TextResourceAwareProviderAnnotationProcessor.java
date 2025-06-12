@@ -168,6 +168,8 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                 );
                 writer.flush();
             }
+
+            this.printGenerated(providerClassNameString);
         }
     }
 
@@ -209,6 +211,8 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
                 );
                 writer.flush();
             }
+
+            this.printGenerated(providerClassNameString);
         }
     }
 
@@ -260,6 +264,23 @@ public final class TextResourceAwareProviderAnnotationProcessor extends Abstract
     }
 
     // reporting........................................................................................................
+
+    private void printGenerated(final String generatedClass) {
+        this.info(
+                this.getClass()
+                        .getSimpleName() +
+                        " generated " +
+                        generatedClass +
+                        ".java"
+        );
+    }
+
+    /**
+     * Maven prints this message at INFO.
+     */
+    private void info(final String message) {
+        this.messager.printMessage(Kind.NOTE, message);
+    }
 
     /**
      * Reports an error during the compile process.
